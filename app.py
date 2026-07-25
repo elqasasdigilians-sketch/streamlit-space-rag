@@ -40,19 +40,17 @@ db = load_db()
 # جلب قائمة الموديلات المجانية الحية
 available_free_models = fetch_live_free_models()
 
-# القائمة الجانبية لإدخال API Key واختيار الموديل
-with st.sidebar:
-    st.header("⚙️ إعدادات OpenRouter API")
-    user_key = st.text_input("أدخل OpenRouter API Key (اختياري):", type="password")
-    openrouter_api_key = user_key if user_key else st.secrets.get("OPENROUTER_API_KEY", "")
-    
-    if openrouter_api_key:
-        st.success("🟢 المفتاح مفعل ومحمي")
+# جلب المفتاح خفية وبشكل أوتوماتيكي كامل من الـ Secrets
+openrouter_api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
-    st.markdown("---")
+with st.sidebar:
+    st.subheader("🤖 الموديلات المجانية المتاحة حالياً (الحية)")
     
     # اختيار الموديل من القائمة المجلوبة حياً من السيرفر
     model_choice = st.selectbox(
+        "اختر نموذج الذكاء الاصطناعي:",
+        options=available_free_models
+    )
         "اختر نموذج الذكاء الاصطناعي:",
         options=available_free_models
     )
