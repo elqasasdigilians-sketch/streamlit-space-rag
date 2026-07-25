@@ -43,17 +43,18 @@ available_free_models = fetch_live_free_models()
 # جلب المفتاح خفية وبشكل أوتوماتيكي كامل من الـ Secrets
 openrouter_api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
+# القائمة الجانبية
 with st.sidebar:
     st.subheader("🤖 الموديلات المجانية المتاحة حالياً (الحية)")
     
-    # اختيار الموديل من القائمة المجلوبة حياً من السيرفر
+    # اختيار الموديل من القائمة
     model_choice = st.selectbox(
         "اختر نموذج الذكاء الاصطناعي:",
         options=available_free_models
     )
-        "اختر نموذج الذكاء الاصطناعي:",
-        options=available_free_models
-    )
+    
+    st.caption(f"🟢 تم جلب {len(available_free_models)} موديل مجاني مجرّب وشغّال الآن من OpenRouter.")
+    st.divider()
     
     st.caption(f"🟢 تم جلب {len(available_free_models)} موديل مجاني مجرّب وشغّال الآن من OpenRouter.")
     st.divider()
