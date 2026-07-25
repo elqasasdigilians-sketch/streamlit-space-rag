@@ -5,15 +5,15 @@ import json
 import os
 import base64
 
-# 1️⃣ ضبط إعدادات الصفحة والـ Dark Mode
+# 1️⃣ ضبط إعدادات الصفحة والتجاوب التلقائي مع الموبايل واللابتوب
 st.set_page_config(
     page_title="Space Knowledge RAG System",
     page_icon="🌌",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"  # فتح/غلق القائمة الجانبية أوتوماتيكياً حسب نوع الجهاز
 )
 
-# 2️⃣ دالة لجلب الصورة الشخصية وتحويلها إلى Base64 لعرضها دائرية بضمان 100%
+# 2️⃣ دالة لجلب الصورة الشخصية وتحويلها إلى Base64 لضمان ظهورها دائرية
 def get_avatar_src():
     for filename in ["my_photo.png", "my_photo.png.png", "my_photo.jpg", "my_photo.jpeg"]:
         if os.path.exists(filename):
@@ -27,12 +27,12 @@ def get_avatar_src():
 
 avatar_src = get_avatar_src()
 
-# 3️⃣ تصميم CSS مخصص للوضوح العالي وتخفيف خلفية الفضاء وتلقائية اتجاه النصوص
+# 3️⃣ تصميم CSS متكامل يشمل الـ Media Queries لشاشات الموبايل والتابلت واللابتوب
 space_css = """
 <style>
 /* خلفية الفضاء مدمجة بطبقة داكنة ناعمة لتقليل التشتيت */
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(rgba(10, 14, 26, 0.83), rgba(10, 14, 26, 0.88)), 
+    background: linear-gradient(rgba(10, 14, 26, 0.85), rgba(10, 14, 26, 0.90)), 
                 url("https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2000&auto=format&fit=crop");
     background-size: cover;
     background-position: center;
@@ -42,7 +42,7 @@ space_css = """
 
 /* الشريط الجانبي بزجاج داكن راقي */
 [data-testid="stSidebar"] {
-    background-color: rgba(13, 18, 32, 0.93) !important;
+    background-color: rgba(13, 18, 32, 0.94) !important;
     backdrop-filter: blur(12px);
     border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -56,7 +56,7 @@ h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     color: #FFFFFF !important;
 }
 
-/* 🎯 تحسين مربع الإدخال (Input Box) ليكون شديد الوضوح وسهل القراءة */
+/* 🎯 تحسين مربع الإدخال (Input Box) */
 .stTextInput input {
     background-color: rgba(22, 30, 48, 0.95) !important;
     color: #FFFFFF !important;
@@ -65,7 +65,7 @@ h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     font-size: 16px !important;
     padding: 12px !important;
     transition: all 0.3s ease-in-out !important;
-    direction: auto !important; /* محاذاة تلقائية أثناء الكتابة */
+    direction: auto !important;
 }
 
 /* عند مرور الماوس (Hover) أو الضغط عليه (Focus) */
@@ -103,7 +103,7 @@ h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     transform: scale(1.02) !important;
 }
 
-/* 🎯 تصميم الصورة الشخصية الدائرية واسم Abdelrhman Khaled */
+/* 🎯 تصميم الصورة الشخصية الدائرية واسم المستخدم */
 #user-profile-container {
     display: flex;
     flex-direction: column;
@@ -129,7 +129,7 @@ h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     letter-spacing: 0.5px;
 }
 
-/* 🎯 صندوق عرض الإجابة مع اتجاه تلقائي (عربي يمين / إنجليزي شمال) */
+/* 🎯 صندوق عرض الإجابة مع اتجاه تلقائي (يمين للعربي / شمال للإنجليزي) */
 .answer-box {
     background-color: rgba(22, 30, 48, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -142,6 +142,68 @@ h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     dir: auto;
     text-align: start;
     unicode-bidi: plaintext;
+}
+
+/* 📱💻📱 ========================================================= */
+/* 🎯 MEDIA QUERIES (التجاوب الذكي مع مختلف مقاسات الشاشات) */
+/* ================================================================ */
+
+/* شاشات الأجهزة المتوسطة والتابلت (أقل من 992px) */
+@media screen and (max-width: 992px) {
+    .answer-box {
+        font-size: 16px !important;
+        padding: 16px !important;
+    }
+    #user-profile-container img {
+        width: 95px !important;
+        height: 95px !important;
+    }
+}
+
+/* شاشات الموبايل الذكية (أقل من 768px) */
+@media screen and (max-width: 768px) {
+    /* إلغاء الـ fixed background لمنع بطء الحركة والتشتيت في الموبايل */
+    [data-testid="stAppViewContainer"] {
+        background-attachment: scroll !important;
+    }
+    
+    /* تكبير وتوسيع زر التوليد ليشمل العرض بالكامل لسهولة الضغط بالأصبع */
+    .stButton > button {
+        width: 100% !important;
+        font-size: 15px !important;
+        padding: 14px !important;
+    }
+
+    /* تعديل أحجام النصوص والمربعات لتناسب شاشة الهاتف */
+    .stTextInput input {
+        font-size: 14px !important;
+        padding: 10px !important;
+    }
+    
+    .answer-box {
+        font-size: 15px !important;
+        padding: 14px !important;
+    }
+
+    #user-profile-container img {
+        width: 85px !important;
+        height: 85px !important;
+    }
+
+    #user-profile-container h3 {
+        font-size: 18px !important;
+    }
+}
+
+/* شاشات الموبايل الصغيرة جداً (أقل من 480px) */
+@media screen and (max-width: 480px) {
+    h1 {
+        font-size: 22px !important;
+    }
+    .answer-box {
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+    }
 }
 </style>
 """
@@ -180,7 +242,7 @@ openrouter_api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
 # 4️⃣ القائمة الجانبية (Sidebar)
 with st.sidebar:
-    # عرض الصورة الدائرية واسمك بشكل أنيق
+    # عرض الصورة الدائرية واسمك
     st.markdown(
         f"""
         <div id="user-profile-container">
@@ -209,7 +271,7 @@ with st.sidebar:
     st.markdown(
         """
         <div style="text-align: center; padding: 12px; background-color: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15);">
-            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 20px;">شكراً بشمهندس أحمد يحيى ❤️</h3>
+            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 20px;">شكراً دكتور أحمد يحيى ❤️</h3>
         </div>
         """,
         unsafe_allow_html=True
