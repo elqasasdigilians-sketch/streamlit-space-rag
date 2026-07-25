@@ -43,8 +43,8 @@ available_free_models = fetch_live_free_models()
 # القائمة الجانبية لإدخال API Key واختيار الموديل
 with st.sidebar:
     st.header("⚙️ إعدادات OpenRouter API")
-    openrouter_api_key = st.text_input("أدخل مفتاح OpenRouter API Key:", type="password")
-    
+    default_key = st.secrets.get("OPENROUTER_API_KEY", "") if "OPENROUTER_API_KEY" in st.secrets else ""
+    openrouter_api_key = st.text_input("أدخل OpenRouter API Key:", value=default_key, type="password")
     st.markdown("---")
     st.subheader("🤖 الموديلات المجانية المتاحة حالياً (الحيّة)")
     
