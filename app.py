@@ -27,10 +27,10 @@ def get_avatar_src():
 
 avatar_src = get_avatar_src()
 
-# 3️⃣ تصميم CSS مخصص للوضوح العالي وتخفيف حدة خلفية الفضاء
+# 3️⃣ تصميم CSS مخصص للوضوح العالي وتخفيف خلفية الفضاء وتلقائية اتجاه النصوص
 space_css = """
 <style>
-/* خلفية الفضاء مدمجة بطبقة داكنة ناعمة لتقليل التشتيت وجعل النصوص والمربعات قراءتها ممتازة */
+/* خلفية الفضاء مدمجة بطبقة داكنة ناعمة لتقليل التشتيت */
 [data-testid="stAppViewContainer"] {
     background: linear-gradient(rgba(10, 14, 26, 0.83), rgba(10, 14, 26, 0.88)), 
                 url("https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2000&auto=format&fit=crop");
@@ -65,6 +65,7 @@ h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     font-size: 16px !important;
     padding: 12px !important;
     transition: all 0.3s ease-in-out !important;
+    direction: auto !important; /* محاذاة تلقائية أثناء الكتابة */
 }
 
 /* عند مرور الماوس (Hover) أو الضغط عليه (Focus) */
@@ -126,6 +127,21 @@ h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     color: #FFFFFF !important;
     margin: 0;
     letter-spacing: 0.5px;
+}
+
+/* 🎯 صندوق عرض الإجابة مع اتجاه تلقائي (عربي يمين / إنجليزي شمال) */
+.answer-box {
+    background-color: rgba(22, 30, 48, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 18px;
+    margin-top: 10px;
+    color: #FFFFFF;
+    font-size: 17px;
+    line-height: 1.7;
+    dir: auto;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 </style>
 """
@@ -193,7 +209,7 @@ with st.sidebar:
     st.markdown(
         """
         <div style="text-align: center; padding: 12px; background-color: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15);">
-            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 20px;">شكراً بشمهندس أحمد يحيى ❤️</h3>
+            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 20px;">شكراً دكتور أحمد يحيى ❤️</h3>
         </div>
         """,
         unsafe_allow_html=True
@@ -224,9 +240,19 @@ if st.button("🚀 البحث وتوليد الإجابة"):
                 generate_answer = pipeline_module.generate_answer
                 
                 result = generate_answer(query, db, openrouter_api_key, model_name=model_choice, top_k=top_k)
+                answer_text = result.get("answer", "لا توجد إجابة")
                 
                 st.success("✨ الإجابة:")
-                st.write(result.get("answer", "لا توجد إجابة"))
+                
+                # عرض الإجابة بداخل حاوية ذكية تضبط الاتجاه أوتوماتيكياً (يمين للعربي / شمال للإنجليزي)
+                st.markdown(
+                    f"""
+                    <div class="answer-box" dir="auto">
+                        {answer_text}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
                 
                 with st.expander("📚 المصادر المسترجعة من قاعدة البيانات"):
                     for idx, doc in enumerate(result.get("sources", []), 1):
