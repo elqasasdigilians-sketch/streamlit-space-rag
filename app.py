@@ -1,143 +1,155 @@
 import streamlit as st
 import importlib
-import json
 import urllib.request
-from openai import OpenAI
+import json
 
-# ضبط إعدادات الصفحة
-st.set_page_config(page_title="Space Generative RAG Engine", page_icon="🤖", layout="wide")
+# 1️⃣ ضبط إعدادات الصفحة والـ Dark Mode
+st.set_page_config(
+    page_title="Space Knowledge RAG System",
+    page_icon="🌌",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# دالة لجلب الموديلات المجانية المتاحة حالياً حيّة من OpenRouter
-@st.cache_data(ttl=1800)  # تحديث القائمة تلقائياً كل 30 دقيقة
+# 2️⃣ تصميم الخلفية الفضائية والـ Dark Mode والجماليات باستخدام CSS
+space_css = """
+<style>
+/* خلفية الفضاء المتحركة/العالية الدقة */
+[data-testid="stAppViewContainer"] {
+    background-image: url("https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2000&auto=format&fit=crop");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* جعل الشريط الجانبي بشفافية زجاجية راقية (Glassmorphism Dark) */
+[data-testid="stSidebar"] {
+    background-color: rgba(11, 15, 25, 0.88) !important;
+    backdrop-filter: blur(12px);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* جعل أعلى الصفحة شفاف */
+[data-testid="stHeader"] {
+    background-color: rgba(0,0,0,0) !important;
+}
+
+/* تحويل كل النصوص للون الأبيض لتناسب الـ Dark Mode */
+h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
+    color: #FFFFFF !important;
+}
+
+/* تحسين شكل خانات الإدخال والقوائم */
+.stTextInput > div > div > input, .stSelectbox > div > div {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: white !important;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* زر البحث والتوليد */
+.stButton > button {
+    background: linear-gradient(90deg, #ff4b4b 0%, #ff7b54 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: bold !important;
+}
+</style>
+"""
+st.markdown(space_css, unsafe_allow_html=True)
+
+# جلب قائمة الموديلات المجانية
 def fetch_live_free_models():
-    url = "https://openrouter.ai/api/v1/models"
     try:
+        url = "https://openrouter.ai/api/v1/models"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=5) as response:
             if response.status == 200:
                 data = json.loads(response.read().decode('utf-8'))
-                # فلترة الموديلات المجانية الشغالة حالياً فقط
                 free_models = [m['id'] for m in data.get('data', []) if ':free' in m['id']]
                 if free_models:
                     return sorted(free_models)
     except Exception:
         pass
-    # قائمة احتياطية في حال تعثر الاتصال
     return ["meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen-2.5-72b-instruct:free"]
 
-# استيراد دالة البحث من قاعدة البيانات
+# استيراد قاعدة البيانات
 vdb_module = importlib.import_module("04_vector_db")
 get_vector_db = vdb_module.get_vector_db
-search_db = vdb_module.search_db
+search_db = vdb_module.Search_db
 
-# تحميل قاعدة البيانات مرة واحدة (Caching)
 @st.cache_resource
 def load_db():
     return get_vector_db()
 
 db = load_db()
 
-# جلب قائمة الموديلات المجانية الحية
 available_free_models = fetch_live_free_models()
 
-# جلب المفتاح خفية وبشكل أوتوماتيكي كامل من الـ Secrets
+# جلب الـ API Key في الخفاء
 openrouter_api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
-# القائمة الجانبية
+# 3️⃣ القائمة الجانبية (Sidebar) بصورتك والإهداء
 with st.sidebar:
-    st.subheader("🤖 الموديلات المجانية المتاحة حالياً (الحية)")
+    # 🖼️ صورة اللوجو / صورتك الشخصية
+    # ملحوظة: يمكنك استبدال هذا الرابط برابط صورتك المباشر أو مسار ملف الصورة لو رفعتها على GitHub
+    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=110)
     
-    # اختيار الموديل من القائمة
+    st.subheader("🤖 الموديلات المتاحة")
+    
     model_choice = st.selectbox(
         "اختر نموذج الذكاء الاصطناعي:",
         options=available_free_models
     )
     
-    st.caption(f"🟢 تم جلب {len(available_free_models)} موديل مجاني مجرّب وشغّال الآن من OpenRouter.")
+    st.caption(f"🟢 تم جلب {len(available_free_models)} موديل مجاني شغال من OpenRouter.")
+    
     st.divider()
     
-    st.caption(f"🟢 تم جلب {len(available_free_models)} موديل مجاني مجرّب وشغّال الآن من OpenRouter.")
-    st.divider()
+    # ❤️ إهداء خاص لدكتور يحيى
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 12px; background-color: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15);">
+            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 20px;">شكراً دكتور يحيى ❤️</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-# عنوان التطبيق
-st.title("🤖 Space Knowledge Generative RAG System")
+# 4️⃣ واجهة التطبيق الرئيسية
+st.title("🌌 Space Knowledge Generative RAG System")
 st.markdown("بحث واسترجاع من قاعدة البيانات + توليد إجابة ذكية باستخدام OpenRouter.")
-
 st.divider()
 
-# منطقة الإدخال
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    user_query = st.text_input("💬 أكتب سؤالك بالعربية أو الإنجليزية:", placeholder="مثلاً: ما هو الثقب الأسود؟ أو What is the Artemis program?")
+    query = st.text_input("أكتب سؤالك بالعربية أو الإنجليزية:", placeholder="مثال: كلمني عن كوكب المريح")
 
 with col2:
     top_k = st.slider("عدد المصادر المسترجعة (Top K):", min_value=1, max_value=5, value=3)
 
-# زر التوليد والبحث
-if st.button("🚀 البحث وتوليد الإجابة", type="primary"):
-    if not user_query.strip():
-        st.error("رجاءً أدخل سؤالاً أو كلمة للبحث!")
-    elif not openrouter_api_key.strip():
-        st.warning("⚠️ يرجى إدخال مفتاح OpenRouter API Key في الشريط الجانبي (Sidebar) أولاً!")
+if st.button("🚀 البحث وتوليد الإجابة"):
+    if not query:
+        st.warning("يرجى إدخال سؤال أولاً!")
+    elif not openrouter_api_key:
+        st.error("لم يتم العثور على API Key في الـ Secrets!")
     else:
-        # 1. البحث والاسترجاع من قاعدة البيانات (Retrieval)
-        with st.spinner("1️⃣ جاري البحث في قاعدة البيانات الاتجاهية (ChromaDB)..."):
-            results = search_db(db, user_query, top_k=top_k)
-            
-        if results and 'documents' in results and results['documents'][0]:
-            context_chunks = results['documents'][0]
-            metadatas = results['metadatas'][0]
-            
-            # تجميع النصوص المسترجعة في سياق واحد (Context)
-            context_text = "\n\n".join([f"Source [{i+1}]:\n{doc}" for i, doc in enumerate(context_chunks)])
-            
-            # صياغة الـ Prompt الهندسي الموجه
-            # صياغة الـ Prompt المرن (يستعين بالمعلومات العامة لو الملفات ناقصة)
-            prompt = f"""
-You are an expert Space Science AI Assistant.
-First, try to answer the user's question using the provided context below.
-If the context contains the answer, base your response strictly on it.
-If the context does NOT contain enough information, use your own general space knowledge to answer accurately, but add a brief note saying: "(Note: Answer complemented using general AI knowledge)".
-
-Context:
-{context_text}
-
-User Question: {user_query}
-
-Answer in a clean, professional, and well-structured manner (Answer in Arabic if asked in Arabic):
-"""
-
-            # 2. التوليد بواسطة OpenRouter (Generation)
-            with st.spinner(f"2️⃣ جاري قراءة المستندات وتوليد الإجابة بواسطة ({model_choice})..."):
-                try:
-                    client = OpenAI(
-                        base_url="https://openrouter.ai/api/v1",
-                        api_key=openrouter_api_key,
-                    )
-
-                    completion = client.chat.completions.create(
-                        model=model_choice,
-                        messages=[
-                            {"role": "user", "content": prompt}
-                        ]
-                    )
-
-                    response_text = completion.choices[0].message.content
-
-                    st.success("✨ الإجابة المجهزة بواسطة الذكاء الاصطناعي (OpenRouter RAG Answer):")
-                    st.markdown(response_text)
-                    
-                except Exception as e:
-                    st.error(f"حدث خطأ أثناء الاتصال بـ OpenRouter API: {e}")
-
-            st.divider()
-
-            # 3. إظهار المصادر والمقاطع المسترجعة
-            st.subheader("📚 المصادر والمقاطع التي اعتمد عليها الذكاء الاصطناعي (Context):")
-            for idx, (doc_text, metadata) in enumerate(zip(context_chunks, metadatas)):
-                with st.expander(f"📌 المصدر {idx + 1} - الملف: {metadata.get('source', 'غير معروف')}"):
-                    st.write(doc_text)
-                    
-        else:
-            st.warning("لم يتم العثور على معلومات مطابقة في قاعدة البيانات.")
+        with st.spinner("جاري البحث في قاعدة البيانات وتوليد الإجابة..."):
+            try:
+                pipeline_module = importlib.import_module("05_pipeline")
+                generate_answer = pipeline_module.generate_answer
+                
+                result = generate_answer(query, db, openrouter_api_key, model_name=model_choice, top_k=top_k)
+                
+                st.success("✨ الإجابة:")
+                st.write(result.get("answer", "لا توجد إجابة"))
+                
+                with st.expander("📚 المصادر المسترجعة من قاعدة البيانات"):
+                    for idx, doc in enumerate(result.get("sources", []), 1):
+                        st.markdown(f"**مصدر {idx}:**")
+                        st.info(doc)
+            except Exception as e:
+                st.error(f"حدث خطأ أثناء التنفيذ: {e}")
