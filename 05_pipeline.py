@@ -8,7 +8,7 @@ def generate_answer(query, db, api_key, model_name="meta-llama/llama-3.3-70b-ins
         vdb_module = importlib.import_module("04_vector_db")
         search_db = vdb_module.search_db
         docs = search_db(db, query, top_k=top_k)
-    except Exception as e:
+    except Exception:
         docs = []
 
     # تجهيز النصوص المسترجعة
@@ -19,12 +19,17 @@ def generate_answer(query, db, api_key, model_name="meta-llama/llama-3.3-70b-ins
         else:
             sources_text.append(str(doc))
 
-    context = "\n\n---\n\n".join(sources_text)
+    context = "\n\n---\n\n".join(sources_text) if sources_text else "لا توجد مصادر مسترجعة ذات صلة مباشرة."
 
-    # 2️⃣ صياغة الـ Prompt الموجه للذكاء الاصطناعي
-    prompt = f"""بناءً على المعلومات والمصادر المرفقة أدناه فقط، أجب عن سؤال المستخدم بدقة ووضوح.
+    # 2️⃣ صياغة الـ Prompt المحدث ليعتمد على المصادر + المعرفة العامة للموديل
+    prompt = f"""أنت مساعد ذكاء اصطناعي خبير ومبدع في مجال العلوم والفضاء.
+أجب عن سؤال المستخدم بأفضل طريقة ممكنة وبدقة عالية.
 
-المصادر والمراجع:
+تعليمات الإجابة:
+1. استخدم المصادر والمراجع المرفقة أدناه إذا كانت توفر الإجابة أو جزءاً منها.
+2. إذا كانت المصادر المرفقة غير كافية أو لا تحتوي على الإجابة، استخدم معارفك العامة الذاتية لإجابة السؤال بشكل كامل وصحيح ومفيد، دون أن ترفض الإجابة.
+
+المصادر والمراجع المرفقة:
 {context}
 
 سؤال المستخدم:
