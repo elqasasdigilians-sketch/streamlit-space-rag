@@ -2,6 +2,8 @@ import streamlit as st
 import importlib
 import urllib.request
 import json
+import os
+import base64
 
 # 1️⃣ ضبط إعدادات الصفحة والـ Dark Mode
 st.set_page_config(
@@ -11,21 +13,36 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2️⃣ تصميم الخلفية الفضائية والـ Dark Mode وتأثير الـ Hover المميز لمربع الإدخال
+# 2️⃣ دالة لجلب الصورة الشخصية وتحويلها إلى Base64 لعرضها دائرية بضمان 100%
+def get_avatar_src():
+    for filename in ["my_photo.png", "my_photo.png.png", "my_photo.jpg", "my_photo.jpeg"]:
+        if os.path.exists(filename):
+            try:
+                with open(filename, "rb") as f:
+                    encoded = base64.b64encode(f.read()).decode()
+                return f"data:image/png;base64,{encoded}"
+            except Exception:
+                pass
+    return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+
+avatar_src = get_avatar_src()
+
+# 3️⃣ تصميم CSS مخصص للوضوح العالي وتخفيف حدة خلفية الفضاء
 space_css = """
 <style>
-/* خلفية الفضاء العالية الدقة */
+/* خلفية الفضاء مدمجة بطبقة داكنة ناعمة لتقليل التشتيت وجعل النصوص والمربعات قراءتها ممتازة */
 [data-testid="stAppViewContainer"] {
-    background-image: url("https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2000&auto=format&fit=crop");
+    background: linear-gradient(rgba(10, 14, 26, 0.83), rgba(10, 14, 26, 0.88)), 
+                url("https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2000&auto=format&fit=crop");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
 }
 
-/* الشريط الجانبي (Glassmorphism Dark) */
+/* الشريط الجانبي بزجاج داكن راقي */
 [data-testid="stSidebar"] {
-    background-color: rgba(11, 15, 25, 0.88) !important;
+    background-color: rgba(13, 18, 32, 0.93) !important;
     backdrop-filter: blur(12px);
     border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -34,31 +51,40 @@ space_css = """
     background-color: rgba(0,0,0,0) !important;
 }
 
-/* تحويل كل النصوص للون الأبيض */
+/* توضيح نصوص العناوين والفقرات */
 h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     color: #FFFFFF !important;
 }
 
-/* 🎯 تأثير الـ Hover والـ Bold الثقيل لمربع الإدخال (Input Box) */
+/* 🎯 تحسين مربع الإدخال (Input Box) ليكون شديد الوضوح وسهل القراءة */
 .stTextInput input {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: white !important;
+    background-color: rgba(22, 30, 48, 0.95) !important;
+    color: #FFFFFF !important;
     border-radius: 10px !important;
-    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border: 2px solid rgba(255, 255, 255, 0.25) !important;
     font-size: 16px !important;
+    padding: 12px !important;
     transition: all 0.3s ease-in-out !important;
 }
 
 /* عند مرور الماوس (Hover) أو الضغط عليه (Focus) */
 .stTextInput input:hover, .stTextInput input:focus {
-    border: 2px solid #ff4b4b !important; /* إطار أحمر فضائي نيون */
-    box-shadow: 0 0 20px rgba(255, 75, 75, 0.85) !important; /* توهج خيالي حول المربع */
-    font-weight: 900 !important; /* خط BOLD ثقيل جداً */
-    background-color: rgba(255, 255, 255, 0.18) !important;
-    transform: translateY(-2px) scale(1.01); /* حركة بروز راقية */
+    border: 2px solid #ff4b4b !important;
+    box-shadow: 0 0 18px rgba(255, 75, 75, 0.85) !important;
+    font-weight: 900 !important;
+    background-color: rgba(30, 40, 65, 1) !important;
+    transform: translateY(-2px);
 }
 
-/* تصميم زر البحث */
+/* القائمة المنسدلة */
+.stSelectbox > div > div {
+    background-color: rgba(22, 30, 48, 0.95) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* زر البحث والتوليد */
 .stButton > button {
     background: linear-gradient(90deg, #ff4b4b 0%, #ff7b54 100%) !important;
     color: white !important;
@@ -66,13 +92,40 @@ h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     border-radius: 10px !important;
     font-weight: bold !important;
     font-size: 16px !important;
-    padding: 10px 20px !important;
+    padding: 12px 24px !important;
     transition: all 0.3s ease-in-out !important;
+    box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
 }
 
 .stButton > button:hover {
-    box-shadow: 0 0 15px rgba(255, 75, 75, 0.9) !important;
-    transform: scale(1.03) !important;
+    box-shadow: 0 0 20px rgba(255, 75, 75, 0.8) !important;
+    transform: scale(1.02) !important;
+}
+
+/* 🎯 تصميم الصورة الشخصية الدائرية واسم Abdelrhman Khaled */
+#user-profile-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-top: 10px;
+}
+#user-profile-container img {
+    border-radius: 50%;
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border: 3px solid #ff4b4b;
+    box-shadow: 0 0 20px rgba(255, 75, 75, 0.5);
+    margin-bottom: 12px;
+}
+#user-profile-container h3 {
+    text-align: center;
+    font-weight: 900 !important;
+    font-size: 21px !important;
+    color: #FFFFFF !important;
+    margin: 0;
+    letter-spacing: 0.5px;
 }
 </style>
 """
@@ -93,7 +146,7 @@ def fetch_live_free_models():
         pass
     return ["meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen-2.5-72b-instruct:free"]
 
-# استيراد قاعدة البيانات - (تم إصلاح اسم الدالة هنا search_db)
+# استيراد قاعدة البيانات
 vdb_module = importlib.import_module("04_vector_db")
 get_vector_db = vdb_module.get_vector_db
 search_db = vdb_module.search_db
@@ -106,39 +159,47 @@ db = load_db()
 
 available_free_models = fetch_live_free_models()
 
-# جلب الـ API Key في الخفاء
+# جلب الـ API Key في الخفاء من Secrets
 openrouter_api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
-# 3️⃣ القائمة الجانبية (Sidebar)
+# 4️⃣ القائمة الجانبية (Sidebar)
 with st.sidebar:
-    # محاولة عرض صورتك الشخصية لو رفعتها باسم my_photo.png أو استخدام الأيقونة
-    try:
-        st.image("my_photo.png", width=110)
-    except:
-        st.image("my_photo.png.png", width=110)
+    # عرض الصورة الدائرية واسمك بشكل أنيق
+    st.markdown(
+        f"""
+        <div id="user-profile-container">
+            <img src="{avatar_src}" alt="Abdelrhman Khaled" />
+            <h3>👨‍💻 Abdelrhman Khaled</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
-    st.subheader("🤖 الموديلات المتاحة")
+    st.divider()
     
+    # اختيار الموديل
+    st.markdown("**🤖 اختر نموذج الذكاء الاصطناعي:**")
     model_choice = st.selectbox(
-        "اختر نموذج الذكاء الاصطناعي:",
-        options=available_free_models
+        "اختر النموذج:",
+        options=available_free_models,
+        label_visibility="collapsed"
     )
     
     st.caption(f"🟢 تم جلب {len(available_free_models)} موديل مجاني شغال.")
     
     st.divider()
     
-    # ❤️ إهداء خاص لدكتور يحيى
+    # ❤️ إهداء خاص لدكتور أحمد يحيى
     st.markdown(
         """
         <div style="text-align: center; padding: 12px; background-color: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15);">
-            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 18px;"> شكراً دكتور احمد يحيى ❤️</h3>
+            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 20px;">شكراً دكتور أحمد يحيى ❤️</h3>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-# 4️⃣ واجهة التطبيق الرئيسية
+# 5️⃣ واجهة التطبيق الرئيسية
 st.title("🌌 Space Knowledge Generative RAG System")
 st.markdown("بحث واسترجاع من قاعدة البيانات + توليد إجابة ذكية باستخدام OpenRouter.")
 st.divider()
