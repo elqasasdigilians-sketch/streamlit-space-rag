@@ -11,10 +11,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2️⃣ تصميم الخلفية الفضائية والـ Dark Mode والجماليات باستخدام CSS
+# 2️⃣ تصميم الخلفية الفضائية والـ Dark Mode وتأثير الـ Hover المميز لمربع الإدخال
 space_css = """
 <style>
-/* خلفية الفضاء المتحركة/العالية الدقة */
+/* خلفية الفضاء العالية الدقة */
 [data-testid="stAppViewContainer"] {
     background-image: url("https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2000&auto=format&fit=crop");
     background-size: cover;
@@ -23,38 +23,56 @@ space_css = """
     background-attachment: fixed;
 }
 
-/* جعل الشريط الجانبي بشفافية زجاجية راقية (Glassmorphism Dark) */
+/* الشريط الجانبي (Glassmorphism Dark) */
 [data-testid="stSidebar"] {
     background-color: rgba(11, 15, 25, 0.88) !important;
     backdrop-filter: blur(12px);
     border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* جعل أعلى الصفحة شفاف */
 [data-testid="stHeader"] {
     background-color: rgba(0,0,0,0) !important;
 }
 
-/* تحويل كل النصوص للون الأبيض لتناسب الـ Dark Mode */
+/* تحويل كل النصوص للون الأبيض */
 h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
     color: #FFFFFF !important;
 }
 
-/* تحسين شكل خانات الإدخال والقوائم */
-.stTextInput > div > div > input, .stSelectbox > div > div {
+/* 🎯 تأثير الـ Hover والـ Bold الثقيل لمربع الإدخال (Input Box) */
+.stTextInput input {
     background-color: rgba(255, 255, 255, 0.08) !important;
     color: white !important;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    font-size: 16px !important;
+    transition: all 0.3s ease-in-out !important;
 }
 
-/* زر البحث والتوليد */
+/* عند مرور الماوس (Hover) أو الضغط عليه (Focus) */
+.stTextInput input:hover, .stTextInput input:focus {
+    border: 2px solid #ff4b4b !important; /* إطار أحمر فضائي نيون */
+    box-shadow: 0 0 20px rgba(255, 75, 75, 0.85) !important; /* توهج خيالي حول المربع */
+    font-weight: 900 !important; /* خط BOLD ثقيل جداً */
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    transform: translateY(-2px) scale(1.01); /* حركة بروز راقية */
+}
+
+/* تصميم زر البحث */
 .stButton > button {
     background: linear-gradient(90deg, #ff4b4b 0%, #ff7b54 100%) !important;
     color: white !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     font-weight: bold !important;
+    font-size: 16px !important;
+    padding: 10px 20px !important;
+    transition: all 0.3s ease-in-out !important;
+}
+
+.stButton > button:hover {
+    box-shadow: 0 0 15px rgba(255, 75, 75, 0.9) !important;
+    transform: scale(1.03) !important;
 }
 </style>
 """
@@ -75,10 +93,10 @@ def fetch_live_free_models():
         pass
     return ["meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen-2.5-72b-instruct:free"]
 
-# استيراد قاعدة البيانات
+# استيراد قاعدة البيانات - (تم إصلاح اسم الدالة هنا search_db)
 vdb_module = importlib.import_module("04_vector_db")
 get_vector_db = vdb_module.get_vector_db
-search_db = vdb_module.Search_db
+search_db = vdb_module.search_db
 
 @st.cache_resource
 def load_db():
@@ -91,11 +109,13 @@ available_free_models = fetch_live_free_models()
 # جلب الـ API Key في الخفاء
 openrouter_api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
-# 3️⃣ القائمة الجانبية (Sidebar) بصورتك والإهداء
+# 3️⃣ القائمة الجانبية (Sidebar)
 with st.sidebar:
-    # 🖼️ صورة اللوجو / صورتك الشخصية
-    # ملحوظة: يمكنك استبدال هذا الرابط برابط صورتك المباشر أو مسار ملف الصورة لو رفعتها على GitHub
-    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=110)
+    # محاولة عرض صورتك الشخصية لو رفعتها باسم my_photo.png أو استخدام الأيقونة
+    try:
+        st.image("my_photo.png", width=110)
+    except:
+        st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=110)
     
     st.subheader("🤖 الموديلات المتاحة")
     
@@ -104,7 +124,7 @@ with st.sidebar:
         options=available_free_models
     )
     
-    st.caption(f"🟢 تم جلب {len(available_free_models)} موديل مجاني شغال من OpenRouter.")
+    st.caption(f"🟢 تم جلب {len(available_free_models)} موديل مجاني شغال.")
     
     st.divider()
     
@@ -126,7 +146,7 @@ st.divider()
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    query = st.text_input("أكتب سؤالك بالعربية أو الإنجليزية:", placeholder="مثال: كلمني عن كوكب المريح")
+    query = st.text_input("أكتب سؤالك بالعربية أو الإنجليزية:", placeholder="مثال: كلمني عن كوكب المريخ")
 
 with col2:
     top_k = st.slider("عدد المصادر المسترجعة (Top K):", min_value=1, max_value=5, value=3)
