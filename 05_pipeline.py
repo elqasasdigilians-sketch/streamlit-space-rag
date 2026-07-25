@@ -1,58 +1,65 @@
+import urllib.request
+import json
 import importlib
 
-# استيراد الوظائف من الملفات الـ 4 السابقة
-doc_module = importlib.import_module("01_documents")
-prep_module = importlib.import_module("02_preprocessing")
-chunk_module = importlib.import_module("03_chunking")
-vdb_module = importlib.import_module("04_vector_db")
+def generate_answer(query, db, api_key, model_name="meta-llama/llama-3.3-70b-instruct:free", top_k=3):
+    # 1️⃣ البحث في قاعدة البيانات لاسترجاع النصوص ذات الصلة
+    try:
+        vdb_module = importlib.import_module("04_vector_db")
+        search_db = vdb_module.search_db
+        docs = search_db(db, query, top_k=top_k)
+    except Exception as e:
+        docs = []
 
-load_documents = doc_module.load_documents
-preprocess_documents = prep_module.preprocess_documents
-create_chunks = chunk_module.create_chunks
-get_vector_db = vdb_module.get_vector_db
-add_chunks_to_db = vdb_module.add_chunks_to_db
-search_db = vdb_module.search_db
+    # تجهيز النصوص المسترجعة
+    sources_text = []
+    for doc in docs:
+        if hasattr(doc, 'page_content'):
+            sources_text.append(doc.page_content)
+        else:
+            sources_text.append(str(doc))
 
-def run_rag_indexing_pipeline(data_dir="data"):
-    """
-    تشغيل خط الإنتاج الكامل: القراءة -> التنظيف -> التقطيع -> التخزين في ChromaDB.
-    """
-    print("🚀 بدء تشغيل الـ RAG Pipeline...\n")
+    context = "\n\n---\n\n".join(sources_text)
+
+    # 2️⃣ صياغة الـ Prompt الموجه للذكاء الاصطناعي
+    prompt = f"""بناءً على المعلومات والمصادر المرفقة أدناه فقط، أجب عن سؤال المستخدم بدقة ووضوح.
+
+المصادر والمراجع:
+{context}
+
+سؤال المستخدم:
+{query}
+
+الإجابة:"""
+
+    # 3️⃣ الإرسال إلى OpenRouter API
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://streamlit.io",
+        "X-Title": "Space Knowledge RAG"
+    }
     
-    # 1. قراءة المستندات
-    raw_docs = load_documents(data_dir)
-    print(f"1️⃣ تم قراءة {len(raw_docs)} مستند(ات) من مجلد '{data_dir}'.")
-    
-    if not raw_docs:
-        print("⚠️ مجلد البيانات فاضي حالياً. سيعمل النظام عند إضافة ملفات فيه للاحقاً.")
-        return None
+    payload = {
+        "model": model_name,
+        "messages": [
+            {"role": "user", "content": prompt}
+        ]
+    }
 
-    # 2. تنظيف النصوص
-    cleaned_docs = preprocess_documents(raw_docs)
-    print("2️⃣ تم تنظيف النصوص بنجاح.")
+    try:
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+        with urllib.request.urlopen(req, timeout=30) as response:
+            if response.status == 200:
+                result = json.loads(response.read().decode('utf-8'))
+                answer = result['choices'][0]['message']['content']
+            else:
+                answer = f"خطأ في الاتصال بالنموذج (Status Code: {response.status})"
+    except Exception as e:
+        answer = f"تعذر توليد الإجابة من النموذج: {e}"
 
-    # 3. تقطيع النصوص
-    chunks = create_chunks(cleaned_docs, chunk_size=50, overlap=10)
-    print(f"3️⃣ تم تقطيع النصوص إلى {len(chunks)} قطعة (Chunks).")
-
-    # 4. التخزين في قاعدة البيانات الاتجاهية
-    db = get_vector_db()
-    add_chunks_to_db(db, chunks)
-    print("\n✅ اكتملت عملية الفهرسة والتخزين بنجاح!")
-    
-    return db
-
-# اختبار خط الإنتاج
-if __name__ == "__main__":
-    # تشغيل خط الإنتاج بالكامل
-    db = run_rag_indexing_pipeline()
-    
-    # تجربة سؤال في حالة وجود قاعدة بيانات
-    if db:
-        user_query = "Tell me about space exploration"
-        print(f"\n🔍 جاري البحث عن: '{user_query}'...")
-        results = search_db(db, user_query, top_k=2)
-        
-        print("\n📄 القطع الأكثر صلة التي تم العثور عليها:")
-        for idx, doc_text in enumerate(results['documents'][0]):
-            print(f"   [{idx+1}] {doc_text}")
+    return {
+        "answer": answer,
+        "sources": sources_text
+    }
