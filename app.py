@@ -115,7 +115,7 @@ with st.sidebar:
     try:
         st.image("my_photo.png", width=110)
     except:
-        st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=110)
+        st.image("my_photo.png.png", width=110)
     
     st.subheader("🤖 الموديلات المتاحة")
     
