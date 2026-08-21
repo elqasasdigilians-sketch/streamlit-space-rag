@@ -271,7 +271,7 @@ with st.sidebar:
     st.markdown(
         """
         <div style="text-align: center; padding: 12px; background-color: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15);">
-            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 20px;">شكراً بشمهندس أحمد يحيى ❤️</h3>
+            <h3 style="color: #ff4b4b !important; margin: 0; font-size: 20px;">Eng - Abdbelrhman Khaled ❤️</h3>
         </div>
         """,
         unsafe_allow_html=True
